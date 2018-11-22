@@ -1,28 +1,26 @@
 import subprocess as sp
-import numpy as np
-import sys
-from PIL import Image
+import numpy as np1
 from shapes import *
-import lib, os
+import lib
+import os
+import cairocffi as cairo
+from PIL import Image
 
-FFMPEG_BIN = "ffmpeg.exe"
+# Check out wand
 
-original = Image.open("albert.jpg")
-width = 1920
-height = 1080
-ori_arr = np.full((height, width, 3), 255, dtype='uint8')
+FFMPEG_BIN = "ffmpeg"
 
-# feed = np.array(feed)
-arr = np.array(original)
+width = 1080
+height = 720
 
 command = [
     FFMPEG_BIN,
     '-y',                               # overwrite output if it exists
     '-f', 'rawvideo',
     '-vcodec', 'rawvideo',
-    '-s', '%dx%d'%(width, height),      # frame size
-    '-pix_fmt', 'rgb24',
-    '-r', '60',                         # FPS
+    '-s', '%dx%d' % (width, height),    # frame size
+    '-pix_fmt', 'rgb32',
+    '-r', '30',                         # FPS
     '-i', '-',                          # input from pipe
     '-an',                              # no audio
     '-vcodec', 'mpeg',
@@ -32,18 +30,49 @@ command = [
     'outputfile.mp4'
 ]
 
+# #### CAIRO STUFF #### #
+sfc = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+ctx = cairo.Context(sfc)
+ctx.set_source_rgb(1, 1, 1)
+ctx.rectangle(0, 0, width, height)
+ctx.fill()
+
+
+lib.arrow(ctx, (0, 0, 0), 20, height / 2, width - 20, height / 2)
+lib.arrow(ctx, (0, 0, 0), width / 2, height - 20, width / 2, 20)
+lib.arrow(ctx, (0, 0, 0), width / 1.21, height / 1.21, 100, 100)
+
+# function
+ctx.set_source_rgb(1, 0, 0)
+left_margin = - (width / 2) + 20
+x = np.linspace(left_margin, (width / 2) - 20, 500)
+ctx.translate(width / 2, height / 2)
+ctx.move_to(left_margin, - 200 * np.cos(left_margin / 40))
+
 pipe = sp.Popen(command, stdin=sp.PIPE)
+for val in x:
+    ctx.set_source_rgb(1, 0, 0)
+    ctx.line_to(val, -(200 * np.cos(val / 40)))
+    ctx.stroke_preserve()
+    buffer = sfc.get_data()
+    arr = np.ndarray(shape=(width, height), dtype=np.uint32, buffer=buffer)
+    pipe.stdin.write(arr)
 
-print(ori_arr.shape)
+ctx.move_to(left_margin, np.exp(left_margin))
+for val in x:
+    ctx.line_to(val, - np.exp(val / 30))
+    ctx.stroke_preserve()
+    buffer = sfc.get_data()
+    arr = np.ndarray(shape=(width, height), dtype=np.uint32, buffer=buffer)
+    pipe.stdin.write(arr)
 
-for i in range(180):
-    pipe.stdin.write(ori_arr)
+ctx.stroke()
+ctx.save()
+# write
 
-line = Line(Point(900, 20), Point(width // 2, height // 2), 1, lib.RED)
-circ = Circle(Point(width//2, height//2), 100, lib.GREEN, 0,)
-for j in range(120):
-    pipe.stdin.write(circ.inst_draw([ori_arr])[0])
+# ##################### #
 
 pipe.stdin.close()
-pipe.wait()
-pipe = sp.Popen(os.getcwd() + "\outputfile.mp4", shell=True)
+#pipe.wait()
+#print(os.getcwd())
+sp.run(["vlc", "outputfile.mp4"])
