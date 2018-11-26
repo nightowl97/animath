@@ -21,30 +21,7 @@ class Scene:
         # self.objects[]
 
 
-class Arrow:
-    def __init__(self, context, x0, y0, x1, y1):
-        pass
-
-
-class Graph:
-    def __init__(self, context, width, height, origin=(0, 0), xlim=(-2,2), ylim=(-2,2)):
-        self.context = context
-        self.width = width
-        self.height = height
-        self.origin = origin
-        self.xlim = xlim
-        self.ylim = ylim
-        self.axis_colors = (0, 0, 0)
-        self.xmargin = width / 20
-        self.ymargin = width / 20
-
-    def show_axis(self):
-        self.context.set_source_rgb(0, 0, 0)
-        # self.
-
-
 class Point:
-
     def __init__(self, x, y, stroke=(0, 0, 0), thickness=1):
         assert type(x) == int and type(y) == int
         self.x = x
@@ -52,26 +29,40 @@ class Point:
         self.thickness = thickness
         self.stroke = stroke
 
+    def draw(self, context, surface):
+        assert isinstance(context, cairo.Context) and isinstance(surface, cairo.ImageSurface)
+        context.save()
+        context.set_source_rgb(*self.stroke)
+        context.move_to(self.x, self.y)
+        # There's probably a better way to do this
+        context.line_to(self.x, self.y)
+        context.stroke()
+
 
 class Shape:
-    def __init__(self, origin):
+    def __init__(self, context, surface, origin, color=(0, 0, 0)):
+        assert isinstance(context, cairo.Context) and isinstance(surface, cairo.ImageSurface)
+        self.context = context
+        self.surface = surface
         assert isinstance(origin, Point)
-        self.poi = np.array([])
+        self.poi = np.ndarray((self.surface.get_width(), self.surface.get_height()), dtype=np.uint32)
         self.stroke = BLACK
         self.origin = origin
-
-    def inst_draw(self, frame_array_list):
-        """
-        :param frame_array_list: list of frames as numpy arrays
-        :return: same frame arrays but with object drawn
-        flips the y coordinate of each frame, adds the geometric shape
-        and returns the frames list.
-        """
-        raise Exception("inst_draw isn't implemented in parent class")
+        self.color = color
 
 
 class Line(Shape):
-    pass
+    def __init__(self, context, surface, point1, point2):
+        super().__init__(context, surface, point1)  # Use the first point as the origin
+        assert isinstance(point2, Point)
+        self.point2 = point2
+
+    def draw(self):
+        self.context.save()
+        self.context.set_source_rgb(*self.color)
+        self.context.move_to(self.origin.x, self.origin.y)
+        self.context.line_to(self.point2.x, self.point2.y)
+        self.context.stroke()
 
 
 class Circle(Shape):

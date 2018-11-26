@@ -1,6 +1,3 @@
-import math
-import cairocffi as cairo
-import numpy as np
 from shapes import *
 
 sfc = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1000, 1000)

@@ -6,7 +6,8 @@ import os
 import cairocffi as cairo
 from PIL import Image
 
-# Check out wand
+# Debugging purposes
+np.set_printoptions(formatter={'int':hex})
 
 FFMPEG_BIN = "ffmpeg"
 
@@ -33,7 +34,7 @@ command = [
 # #### CAIRO STUFF #### #
 sfc = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
 ctx = cairo.Context(sfc)
-ctx.set_source_rgb(1, 1, 1)
+ctx.set_source_rgb(0, 1, 0)
 ctx.rectangle(0, 0, width, height)
 ctx.fill()
 
