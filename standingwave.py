@@ -1,62 +1,62 @@
-import subprocess as sp
-import cairocffi as cairo
-import numpy as np
-import shapes
+# import matplotlib.pyplot as plt
+import ctypes as ct
+from lib import *
+from functools import partial
 
-FFMPEG_BIN = "ffmpeg"
-WIDTH = 720
-HEIGHT = 480
+# TODO: Use OpenGL vertex buffers
+# TODO: Add export to gif/mp4 functionality
 
-command = [FFMPEG_BIN,
-           '-y',
-           '-f', 'rawvideo',
-           '-vcodec', 'rawvideo',
-           '-s', '%dx%d' % (WIDTH, HEIGHT),
-           '-pix_fmt', 'rgb32',
-           '-r', '30',
-           '-i', '-',
-           '-an',
-           '-vcodec', 'mpeg',
-           '-c:v', 'libx264',
-           '-pix_fmt', 'yuv420p',
-           '-loglevel', 'error',
-           'outputtest.mp4'
-           ]
+# load_animation() requires GTK2 and throws ambiguous exceptions otherwise
 
-frames = []
-for j in range(150):  # 5 seconds' worth of frames
-    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, WIDTH, HEIGHT)
-    context = cairo.Context(surface)
-    context.translate(0, HEIGHT)  # Bring origin down to bottom left
-    context.scale(1, -1)  # Flip the y axis upwards
-    context.set_source_rgb(1, 1, 1)
-    context.paint()
-    # Draw on the scene
-    leftp = shapes.Point(10, HEIGHT // 2, thickness=4)
-    rightp = shapes.Point(WIDTH - 10, HEIGHT // 2, thickness=4)
-    horizontal_line = shapes.Line(context, surface, leftp, rightp)
-    horizontal_line.draw()
-    context.save()
+# Math objects
+sine1 = partial(sin, 1, 1, 1)  # TODO: Ugly system, find a better way to pass these to the Function to the class
+func1 = Function(-2, 2, WIDTH, sine1)
+sine2 = partial(sin, 1, 2, - 1)
+func2 = Function(-2, 2, WIDTH, sine2)
 
-    # Draw the sine waves
-    context.set_source_rgb(1, 0, 0)
-    context.new_path()
-    print('frame: ' + str(j))
-    phi = 3
-    for i in range(10, WIDTH - 9, 4):
-        context.line_to(i,               # Arbitrary scaling of amplitude and frequency
-                       (HEIGHT / 2) + (200 * np.cos(i / 80 + (phi * j))))
-        context.stroke_preserve()
-    buffer = surface.get_data()
-    frames.append(np.ndarray(shape=(WIDTH, HEIGHT), dtype=np.uint32, buffer=buffer))
-    context.restore()
-
-# Feed data to ffmpe
-p = sp.Popen(command, stdin=sp.PIPE)
-for frame in frames:
-    p.stdin.write(frame)
+# Pyglet initialization
+config = pyglet.gl.Config(sample_buffers=1, samples=16)
+window = pyglet.window.Window(WIDTH, HEIGHT, config=config)
+glClearColor(*WHITE, 1)
 
 
-p.stdin.close()
-sp.run(['vlc', 'outputtest.mp4'])
+# GL section
+# VBO_ID = GLuint(0)
+# glGenBuffers(1, ct.pointer(VBO_ID))  # Create a Vertex Buffer Object
+# data = (Vertex * len(graph.items()))(*convert_to_ctype(list(graph.items())))
+# glBindBuffer(GL_ARRAY_BUFFER, VBO_ID)
+# glBufferData(GL_ARRAY_BUFFER, ct.sizeof(data), data, GL_DYNAMIC_DRAW)
 
+
+# Frame by frame logic
+def update(dt):
+    # TODO: Implement batch system
+    func1.update(dt)
+    func2.update(dt)
+
+
+pyglet.clock.schedule_interval(update, 1./60)
+
+
+@window.event
+def on_draw():
+    window.clear()
+
+    # Draw X-axis
+    glClear(GL_COLOR_BUFFER_BIT)
+    glLineWidth(2)
+    glColor3f(0, 0, 0)
+    glBegin(GL_LINE_STRIP)
+    glVertex2f(0, HEIGHT / 2)
+    glVertex2f(WIDTH, HEIGHT / 2)
+    glEnd()
+    # glEnableClientState(GL_VERTEX_ARRAY)
+    # Draw function points
+    func1.draw(BLUE)
+    func2.draw(RED)
+    # glVertexPointer(2, GL_FLOAT, 0, 0)
+    # glDrawArrays(GL_POINTS, 0, 2)
+    glFlush()
+
+
+pyglet.app.run()
