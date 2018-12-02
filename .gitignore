@@ -3,6 +3,7 @@
 *.pyc
 *.pyo
 
+*.svg
 *.mp4
 *.png
 *.jpg
