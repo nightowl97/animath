@@ -28,13 +28,13 @@ def sin(amp, k, w, x, t=0):
 def cos(amp, k, w, x, t=0):
     amp = amp * HEIGHT / 6
     k = k / (WIDTH / 4)
-    return amp * np.cos((2 * PI * k * x) - w * t)
+    return amp * np.cos(2 * PI * (k * x - w * t))
 
 
-sine1 = partial(sin, 1, 1, .1)  # TODO: Ugly system, find a better way to pass these to the MathFunction to the class
-func1 = MathFunction(-2, 2, 2 * WIDTH, sine1)
-sine2 = partial(sin, 1, -1, 1/10)
-func2 = MathFunction(-2, 2, 2 * WIDTH, sine2)
+sine1 = partial(cos, 1, 1/8, .2)  # TODO: Ugly system, find a better way to pass these to the MathFunction to the class
+func1 = MathFunction(-2, 2, WIDTH, sine1)
+sine2 = partial(cos, 1, -1/8, .2)
+func2 = MathFunction(-2, 2, WIDTH, sine2)
 func3 = func1 + func2
 circ = Circle((WIDTH / 2, HEIGHT / 2), 200, thickness=2)
 line = Line((WIDTH / 4, 0), (WIDTH / 2, HEIGHT / 2))
@@ -90,8 +90,8 @@ def on_draw():
     func3.draw(GREEN)
     [label.draw() for label in labels]
     fps_display.draw()
-    circ.draw()
-    line.draw()
+    # circ.draw()
+    # line.draw()
     # svgsprite.draw()
     # glVertexPointer(2, GL_FLOAT, 0, 0)
     # glDrawArrays(GL_POINTS, 0, 2)

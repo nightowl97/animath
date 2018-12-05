@@ -138,16 +138,19 @@ class Line:
         assert(len(point1) == 2 and len(point2) == 2)
         self.point1 = point1
         self.point2 = point2
-        self.slope = (point2[1] - point1[1])/(point2[0] - point1[0])
-        self.angle = np.arctan(self.slope)
+        if point1[0] == point2[0]:
+            self.slope = np.inf
+            self.angle = PI / 2
+        else:
+            self.slope = (point2[1] - point1[1])/(point2[0] - point1[0])
+            self.angle = np.arctan(self.slope)
         self.thickness = thickness
         self.color = color
 
     def draw(self):
-        glPointSize(self.thickness)
+        glLineWidth(self.thickness)
         glColor3f(*self.color)
-        glBegin(GL_POINTS)
-        y_intercept = self.point1[1] - self.slope * self.point1[0]
-        for i in range(WIDTH):
-            glVertex2f(i, self.slope * i + y_intercept)
+        glBegin(GL_LINES)
+        glVertex2f(self.point1[0] + WIDTH / 2, self.point1[1] + HEIGHT / 2)
+        glVertex2f(self.point2[0] + WIDTH / 2, self.point2[1] + HEIGHT / 2)
         glEnd()
